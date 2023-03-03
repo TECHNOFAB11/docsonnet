@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"strings"
 
 	"github.com/go-clix/cli"
 
@@ -25,12 +26,22 @@ func main() {
 	outputRaw := root.Flags().Bool("raw", false, "don't transform, dump raw eval result")
 	urlPrefix := root.Flags().String("urlPrefix", "/", "url-prefix for frontmatter")
 	jpath := root.Flags().StringSliceP("jpath", "J", []string{"vendor"}, "Specify an additional library search dir (right-most wins)")
+	extcode := root.Flags().StringSlice("ext-code", []string{}, "specify additional ext code")
 
 	root.Run = func(cmd *cli.Command, args []string) error {
 		file := args[0]
 
 		log.Println("Extracting from Jsonnet")
-		data, err := docsonnet.Extract(file, docsonnet.Opts{JPath: *jpath})
+
+		opts := docsonnet.Opts{JPath: *jpath, ExtCode: map[string]string{}}
+		if len(*extcode) > 0 {
+			for _, ext := range *extcode {
+				res := strings.Split(ext, "=")
+				key, value := res[0], res[1]
+				opts.ExtCode[key] = value
+			}
+		}
+		data, err := docsonnet.Extract(file, opts)
 		if err != nil {
 			log.Fatalln("Extracting:", err)
 		}

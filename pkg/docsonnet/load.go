@@ -11,7 +11,8 @@ import (
 )
 
 type Opts struct {
-	JPath []string
+	JPath   []string
+	ExtCode map[string]string
 }
 
 // Load extracts and transforms the docsonnet data in `filename`, returning the
@@ -50,6 +51,10 @@ func Extract(filename string, opts Opts) ([]byte, error) {
 
 	// invoke load.libsonnet
 	vm.ExtCode("main", fmt.Sprintf(`(import "%s")`, filename))
+
+	for k, v := range opts.ExtCode {
+		vm.ExtCode(k, v)
+	}
 
 	data, err := vm.EvaluateAnonymousSnippet("load.libsonnet", string(load))
 	if err != nil {
